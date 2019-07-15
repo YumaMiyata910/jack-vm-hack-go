@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/YumaMiyata910/jack-vm-hack-go/parser"
 )
 
 func main() {
@@ -54,10 +57,28 @@ func convert(path string) error {
 	}
 	defer readfile.Close()
 
-	// sc := bufio.NewScanner(readfile)
-	// p := parser.NewParser(sc)
+	sc := bufio.NewScanner(readfile)
+	p := parser.NewParser(sc)
 
-	fmt.Println(readfile)
+	filename := filepath.Base(path[:len(path)-len(filepath.Ext(path))])
+	fPath := filepath.Dir(path) + filename
+	writefile, err := os.Create(fPath + ".asm")
+	if err != nil {
+		return fmt.Errorf("新規ファイルを作成できません。 %v", err)
+	}
+	defer writefile.Close()
+
+	for p.HasMoreCommands() {
+		if err = p.ScannerError(); err != nil {
+			return fmt.Errorf("ファイルの読み込みに失敗しました。path:【%s】", path)
+		}
+
+		p.Advance()
+		if p.Text() == "" {
+			continue
+		}
+
+	}
 
 	return err
 }
